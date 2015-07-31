@@ -46,7 +46,7 @@ public class MetadataMapper implements Function<Metadata, HiveTable> {
 
     @Override
     public HiveTable apply(Metadata metadata) {
-        final CcOrg ccOrg = ccOperations.getOrg(UUID.fromString(metadata.orgUUID));
+        final CcOrg ccOrg = ccOperations.getOrg(UUID.fromString(metadata.orgUUID)).toBlocking().single();
         final String databaseName = toValidName(ccOrg.getName());
         final String tableName = toValidName(metadata.title);
         final List<String> fields = Arrays.stream(metadata.dataSample.split(","))

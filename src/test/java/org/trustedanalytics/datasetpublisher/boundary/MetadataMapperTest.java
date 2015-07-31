@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import rx.Observable;
 
 import java.util.Set;
 import java.util.UUID;
@@ -114,7 +115,7 @@ public class MetadataMapperTest {
         @Bean
         public CcOperations ccOperations() {
             CcOperations ccOperations = mock(CcOperations.class);
-            when(ccOperations.getOrg(orgid())).thenReturn(new CcOrg(orgid(), orgName()));
+            when(ccOperations.getOrg(orgid())).thenReturn(Observable.just(new CcOrg(orgid(), orgName())));
             return ccOperations;
         }
     }
