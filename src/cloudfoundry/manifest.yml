@@ -1,0 +1,12 @@
+---
+applications:
+- name: dataset-publisher 
+  memory: 512M
+  instances: 1
+  host: hive
+  services:
+    - hive
+    - arcadia
+    - hue
+    - sso
+  path: target/dataset-publisher-${version}.jar

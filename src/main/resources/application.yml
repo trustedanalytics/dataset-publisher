@@ -1,0 +1,27 @@
+hive:
+  url: ${vcap.services.hive.credentials.hiveUrl:jdbc:hive2://localhost:10000}
+  user: ${vcap.services.hive.credentials.hiveUser:hdfs}
+
+hue:
+  url: ${vcap.services.hue.credentials.hueUrl}
+
+arcadia:
+  url: ${vcap.services.arcadia.credentials.arcadiaUrl}
+
+cf:
+  resource: ${vcap.services.sso.credentials.apiEndpoint}
+  uaa: ${vcap.services.sso.credentials.uaaUri}
+
+security:
+  ignored: /open,/sdoc.jsp,/*.js,/api-docs,/api-docs/default/*,/images/*,/lib/*,/css/*
+
+spring.oauth2:
+  resource:
+    id: cloud_controller
+    jwt:
+      keyUri: ${vcap.services.sso.credentials.tokenKey}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.trustedanalytics: DEBUG
