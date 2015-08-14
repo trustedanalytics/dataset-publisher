@@ -1,20 +1,19 @@
 dataset-publisher
 =================
 
-### Functionality
 Service for exposing datasets as Hive tables
  
-### Details
+## Details
 Service creates table (if it does not already exist) named after dataset title inside of database
 (which is also created if it does not already exist) named after organization to which dataset
 belongs to. In other words full name of the table is:
 `<organization_name>.<dataset_title>`
 
-##### Note
+#### Note
 Name of the database, table and columns can be transformed to fit database engine and driver
 naming scheme.
 
-### Development
+## Development
 To start dataset-publisher run: 
 `mvn spring-boot:run`
 
