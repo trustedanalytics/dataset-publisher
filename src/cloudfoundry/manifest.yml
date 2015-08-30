@@ -6,7 +6,6 @@ applications:
   host: hive
   services:
     - hive
-    - arcadia
-    - hue
+    - external-tools
     - sso
   path: target/dataset-publisher-${version}.jar

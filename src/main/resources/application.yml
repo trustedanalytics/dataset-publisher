@@ -3,10 +3,12 @@ hive:
   user: ${vcap.services.hive.credentials.hiveUser:hdfs}
 
 hue:
-  url: ${vcap.services.hue.credentials.hueUrl}
+  url: ${vcap.services.external-tools.credentials.hue.url}
+  available: ${vcap.services.external-tools.credentials.hue.available}
 
 arcadia:
-  url: ${vcap.services.arcadia.credentials.arcadiaUrl}
+  url: ${vcap.services.external-tools.credentials.arcadia.url}
+  available: ${vcap.services.external-tools.credentials.arcadia.available}
 
 cf:
   resource: ${vcap.services.sso.credentials.apiEndpoint}

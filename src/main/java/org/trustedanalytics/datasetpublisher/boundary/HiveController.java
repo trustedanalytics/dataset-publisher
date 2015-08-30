@@ -21,36 +21,36 @@ import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
-import org.trustedanalytics.datasetpublisher.entity.HiveTable;
-import org.trustedanalytics.datasetpublisher.service.HiveService;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.trustedanalytics.datasetpublisher.Config;
+import org.trustedanalytics.datasetpublisher.entity.HiveTable;
+import org.trustedanalytics.datasetpublisher.service.HiveService;
 
 import java.util.function.Function;
 
 @RestController
 public class HiveController {
 
-    @Value("${hue.url}")
-    private String hueUrl;
+    private final Config.Hue hue;
 
-    @Value("${arcadia.url}")
-    private String arcadiaUrl;
+    private final Config.Arcadia arcadia;
 
     private final HiveService hiveService;
 
     private final Function<Metadata, HiveTable> metadataMapper;
 
     @Autowired
-    public HiveController(HiveService hiveService, Function<Metadata, HiveTable> metadataMapper) {
+    public HiveController(HiveService hiveService, Function<Metadata, HiveTable> metadataMapper,
+        Config.Hue hue, Config.Arcadia arcadia) {
         this.hiveService = hiveService;
         this.metadataMapper = metadataMapper;
+        this.hue = hue;
+        this.arcadia = arcadia;
     }
 
     @RequestMapping(value = "/rest/tables", method = POST)
@@ -59,8 +59,11 @@ public class HiveController {
         final HiveTable table = metadataMapper.apply(metadata);
         hiveService.createTable(table);
 
-        final String hueUrlWithPath = String.join("/", hueUrl, table.databaseName, table.tableName);
-        return new CreateTableResponse(hueUrlWithPath, arcadiaUrl);
+        final String hueUrl = hue.isAvailable()
+            ? String.join("/", hue.getUrl(), table.databaseName, table.tableName)
+            : null;
+        final String arcadiaUrl = arcadia.isAvailable() ? arcadia.getUrl() : null;
+        return new CreateTableResponse(hueUrl, arcadiaUrl);
     }
 
     @RequestMapping(value = "/rest/tables", method = DELETE)

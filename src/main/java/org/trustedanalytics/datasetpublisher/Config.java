@@ -19,6 +19,8 @@ import static org.springframework.context.annotation.ScopedProxyMode.INTERFACES;
 import static org.springframework.web.context.WebApplicationContext.SCOPE_REQUEST;
 
 import com.google.common.collect.ImmutableSet;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.trustedanalytics.cloud.auth.AuthTokenRetriever;
 import org.trustedanalytics.cloud.auth.OAuth2TokenRetriever;
 import org.trustedanalytics.cloud.cc.FeignClient;
@@ -34,12 +36,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.trustedanalytics.datasetpublisher.boundary.ExternalTool;
 
 import java.sql.Driver;
 import java.util.Set;
 import java.util.function.Supplier;
 
 @Configuration
+@EnableConfigurationProperties({ Config.Hue.class, Config.Arcadia.class })
 public class Config {
 
     @Value("${hive.url}")
@@ -94,5 +98,15 @@ public class Config {
                 "stats", "stored", "straight_join", "string", "symbol", "table", "tables", "tblproperties",
                 "terminated", "textfile", "then", "timestamp", "tinyint", "to", "true", "uncached", "union",
                 "update_fn", "use", "using", "values", "view", "when", "where", "with").build();
+    }
+
+    @ConfigurationProperties(prefix = "hue")
+    public static class Hue extends ExternalTool {
+
+    }
+
+    @ConfigurationProperties(prefix = "arcadia")
+    public static class Arcadia extends ExternalTool {
+
     }
 }
