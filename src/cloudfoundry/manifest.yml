@@ -9,3 +9,5 @@ applications:
     - external-tools
     - sso
   path: target/dataset-publisher-${version}.jar
+  env:
+    VERSION: ${version}
