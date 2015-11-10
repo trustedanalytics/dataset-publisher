@@ -19,6 +19,8 @@ import static org.springframework.context.annotation.ScopedProxyMode.INTERFACES;
 import static org.springframework.web.context.WebApplicationContext.SCOPE_REQUEST;
 
 import com.google.common.collect.ImmutableSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.trustedanalytics.cloud.auth.AuthTokenRetriever;
@@ -37,7 +39,9 @@ import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.trustedanalytics.datasetpublisher.boundary.ExternalTool;
+import org.trustedanalytics.datasetpublisher.service.KerberosDataSource;
 
+import java.io.IOException;
 import java.sql.Driver;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -45,6 +49,8 @@ import java.util.function.Supplier;
 @Configuration
 @EnableConfigurationProperties({ Config.Hue.class, Config.Arcadia.class })
 public class Config {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Config.class);
 
     @Value("${hive.url}")
     private String hiveUrl;
@@ -61,7 +67,11 @@ public class Config {
     }
 
     @Bean
-    public JdbcOperations hiveTemplate() {
+    public JdbcOperations hiveTemplate() throws IOException {
+        if(isKerberosEnv(hiveUrl)) {
+            LOGGER.info("Kerberos environment detected");
+            return new JdbcTemplate(new KerberosDataSource(hiveUrl));
+        }
         return new JdbcTemplate(new SimpleDriverDataSource(hiveDriver(), hiveUrl, hiveUser, ""));
     }
 
@@ -108,5 +118,9 @@ public class Config {
     @ConfigurationProperties(prefix = "arcadia")
     public static class Arcadia extends ExternalTool {
 
+    }
+
+    public boolean isKerberosEnv(String jdbcUrl) {
+        return jdbcUrl.contains("auth=kerberos");
     }
 }

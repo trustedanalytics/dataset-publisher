@@ -1,6 +1,6 @@
 ---
 applications:
-- name: dataset-publisher 
+- name: dataset-publisher
   memory: 512M
   instances: 1
   host: hive
@@ -8,6 +8,7 @@ applications:
     - hive
     - external-tools
     - sso
+    - kerberos-service
   path: target/dataset-publisher-${version}.jar
   env:
     VERSION: ${version}
