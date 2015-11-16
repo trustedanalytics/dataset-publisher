@@ -32,6 +32,7 @@ import java.security.PrivilegedExceptionAction;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Objects;
 
 public class KerberosDataSource extends AbstractDataSource implements DataSource {
 
@@ -42,17 +43,16 @@ public class KerberosDataSource extends AbstractDataSource implements DataSource
     private final String pass;
     private final KrbLoginManager loginManager;
 
-    public KerberosDataSource(String jdbcUrl) throws IOException {
+    public KerberosDataSource(String jdbcUrl) {
 
-        this.jdbcUrl = jdbcUrl;
+        this.jdbcUrl = Objects.requireNonNull(jdbcUrl);
 
         //Read application config from environment
         AppConfiguration helper;
         try {
             helper = Configurations.newInstanceFromEnv();
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new IOException("Could not create instance of Helper", e);
+            throw new IllegalStateException("Could not create instance of Helper", e);
         }
 
         ServiceInstanceConfiguration krbConf = helper.getServiceConfig("kerberos-service");
@@ -73,25 +73,19 @@ public class KerberosDataSource extends AbstractDataSource implements DataSource
     }
 
     @Override
-    public Connection getConnection() throws SQLException {
+    public Connection getConnection() {
         try {
             Subject subject = loginManager.loginWithCredentials(user, pass.toCharArray());
             return getConnection(subject);
         } catch (LoginException | PrivilegedActionException e) {
-            e.printStackTrace();
-            throw new SQLException();
+            throw new IllegalStateException("Could not login with given credentials", e);
         }
     }
 
     private Connection getConnection(Subject signedOnUserSubject) throws PrivilegedActionException {
         return (Connection) Subject.doAs(signedOnUserSubject, (PrivilegedExceptionAction<Object>) () -> {
-            try {
-                Class.forName(JDBC_DRIVER);
-                return DriverManager.getConnection(jdbcUrl, null, null);
-            } catch (SQLException  e) {
-                e.printStackTrace();
-                throw new SQLException();
-            }
+            Class.forName(JDBC_DRIVER);
+            return DriverManager.getConnection(jdbcUrl, null, null);
         });
     }
 }
