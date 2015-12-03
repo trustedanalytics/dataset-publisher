@@ -33,11 +33,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.trustedanalytics.datasetpublisher.service.DatabaseNameResolver;
 import rx.Observable;
 
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {MetadataMapperTest.HiveControllerTestConfig.class})
@@ -50,7 +51,10 @@ public class MetadataMapperTest {
     private String orgname;
 
     @Autowired
-    private Function<Metadata, HiveTable> metadataMapper;
+    private BiFunction<Metadata, String, HiveTable> metadataMapper;
+
+    @Autowired
+    private DatabaseNameResolver databaseNameResolver;
 
     @Test
     public void testMapValidMetadata() {
@@ -60,9 +64,10 @@ public class MetadataMapperTest {
         metadata.title = "Qatar: GDP (constant LCU)";
         metadata.dataSample = "Complaint ID,Product,Location,Date,Date received,Timely response?";
         metadata.targetUri = "hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1";
+        metadata.isPublic = false;
 
         // when
-        final HiveTable table = metadataMapper.apply(metadata);
+        final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
 
         // then
         assertThat(table.databaseName, is(orgname));
@@ -79,9 +84,10 @@ public class MetadataMapperTest {
         metadata.title = "1900: CHINA ITS";
         metadata.dataSample = ":One,*Two two,3Three,Four_";
         metadata.targetUri = "hdfs://10.10.123.123/cf/broker/instances/12/34/000000_1";
+        metadata.isPublic = false;
 
         // when
-        final HiveTable table = metadataMapper.apply(metadata);
+        final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
 
         // then
         assertThat(table.databaseName, is(orgname));
@@ -90,8 +96,30 @@ public class MetadataMapperTest {
         assertThat(table.location, is("/cf/broker/instances/12/34"));
     }
 
+    @Test
+    public void testMapPublicDataset() {
+        // given
+        final Metadata metadata = new Metadata();
+        metadata.orgUUID = orgUUID.toString();
+        metadata.title = "Qatar: GDP (constant LCU)";
+        metadata.dataSample = "Complaint ID,Product,Location,Date,Date received,Timely response?";
+        metadata.targetUri = "hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1";
+        metadata.isPublic = true;
+
+        // when
+        final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
+
+        // then
+        assertThat(table.databaseName, is("public"));
+    }
+
     @Configuration
     static class HiveControllerTestConfig {
+
+        @Bean
+        public DatabaseNameResolver databaseNameResolver() {
+            return new DatabaseNameResolver(ccOperations());
+        }
 
         @Bean
         public UUID orgid() {
@@ -105,9 +133,9 @@ public class MetadataMapperTest {
 
 
         @Bean
-        public Function<Metadata, HiveTable> metadataMapper(CcOperations ccOperations) {
+        public BiFunction<Metadata, String, HiveTable> metadataMapper() {
             Set<String> restrictedKeywords = ImmutableSet.of("location", "date");
-            return new MetadataMapper(ccOperations, () -> restrictedKeywords);
+            return new MetadataMapper(() -> restrictedKeywords);
         }
 
 

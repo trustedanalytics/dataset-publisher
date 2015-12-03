@@ -16,14 +16,13 @@
 package org.trustedanalytics.datasetpublisher.boundary;
 
 import org.trustedanalytics.datasetpublisher.entity.HiveTable;
-import org.trustedanalytics.cloud.cc.api.CcOperations;
-import org.trustedanalytics.cloud.cc.api.CcOrg;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -33,28 +32,25 @@ import java.util.stream.Collectors;
  * database, table and columns may change to fit database engine constraints.
  */
 @Component
-public class MetadataMapper implements Function<Metadata, HiveTable> {
+public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
 
-    private final CcOperations ccOperations;
     private final Set<String> restrictedKeywords;
 
     @Autowired
-    public MetadataMapper(CcOperations ccOperations, Supplier<Set<String>> restrictedKeywords) {
-        this.ccOperations = ccOperations;
+    public MetadataMapper(Supplier<Set<String>> restrictedKeywords) {
         this.restrictedKeywords = restrictedKeywords.get();
     }
 
     @Override
-    public HiveTable apply(Metadata metadata) {
-        final CcOrg ccOrg = ccOperations.getOrg(UUID.fromString(metadata.orgUUID)).toBlocking().single();
-        final String databaseName = toValidName(ccOrg.getName());
+    public HiveTable apply(Metadata metadata, String databaseName) {
+
         final String tableName = toValidName(metadata.title);
         final List<String> fields = Arrays.stream(metadata.dataSample.split(","))
             .map(this::toValidName)
             .collect(Collectors.toList());
         final String location = toValidLocation(metadata.targetUri);
 
-        return new HiveTable(databaseName, tableName, fields, location);
+        return new HiveTable(toValidName(databaseName), tableName, fields, location);
     }
 
     /**

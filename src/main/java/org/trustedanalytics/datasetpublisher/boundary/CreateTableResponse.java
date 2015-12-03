@@ -17,11 +17,8 @@ package org.trustedanalytics.datasetpublisher.boundary;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.util.Objects;
 
 /**
  * Class encapsulates links to data analysis tools.
@@ -32,9 +29,8 @@ import java.util.Objects;
 public class CreateTableResponse {
 
     @JsonProperty("hue_url")
-    private final String hueLocation;
+    private final String hueUrl;
 
     @JsonProperty("arcadia_url")
-    private final String arcadiaLocation;
-
+    private final String arcadiaUrl;
 }

@@ -15,28 +15,13 @@
  */
 package org.trustedanalytics.datasetpublisher.boundary;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
+import lombok.Data;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Data
 public class Metadata {
-    @JsonProperty("orgUUID")
     public String orgUUID;
-    @JsonProperty("title")
     public String title;
-    @JsonProperty("dataSample")
     public String dataSample;
-    @JsonProperty("targetUri")
     public String targetUri;
-
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-            .add("orgUUID", orgUUID)
-            .add("title", title)
-            .add("dataSample", dataSample)
-            .add("targetUri", targetUri)
-            .toString();
-    }
+    public Boolean isPublic;
 }

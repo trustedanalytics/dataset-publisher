@@ -16,25 +16,23 @@
 package org.trustedanalytics.datasetpublisher.boundary;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.base.Verify;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.trustedanalytics.datasetpublisher.Config;
 import org.trustedanalytics.datasetpublisher.entity.HiveTable;
+import org.trustedanalytics.datasetpublisher.service.DatabaseNameResolver;
 import org.trustedanalytics.datasetpublisher.service.HiveService;
 
-import java.util.function.Function;
+import java.util.Optional;
+import java.util.function.BiFunction;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HiveControllerTest {
@@ -45,7 +43,7 @@ public class HiveControllerTest {
     private HiveService hiveService;
 
     @Mock
-    private Function<Metadata, HiveTable> metadataMapper;
+    private BiFunction<Metadata, String, HiveTable> metadataMapper;
 
     @Mock
     private HiveTable hiveTable;
@@ -53,9 +51,13 @@ public class HiveControllerTest {
     private Config.Hue hue;
     private Config.Arcadia arcadia;
 
+    @Mock
+    private DatabaseNameResolver databaseNameResolver;
+
     @Before
     public void setUp() {
-        when(metadataMapper.apply(any())).thenReturn(hiveTable);
+        when(metadataMapper.apply(any(), any())).thenReturn(hiveTable);
+        when(databaseNameResolver.resolveName(any())).thenReturn("orgName");
         
         hue = new Config.Hue();
         hue.setUrl("http://hue.example.com");
@@ -64,7 +66,7 @@ public class HiveControllerTest {
         arcadia.setUrl("http://arcadia.example.com");
         arcadia.setAvailable(true);
 
-        sut = new HiveController(hiveService, metadataMapper, hue, arcadia);
+        sut = new HiveController(hiveService, metadataMapper, hue, arcadia, databaseNameResolver);
     }
 
     @Test
@@ -72,8 +74,8 @@ public class HiveControllerTest {
         CreateTableResponse result = sut.createTable(new Metadata());
 
         verify(hiveService).createTable(hiveTable);
-        Assert.assertNotNull(result.getArcadiaLocation());
-        Assert.assertNotNull(result.getHueLocation());
+        Assert.assertNotNull(result.getArcadiaUrl());
+        Assert.assertNotNull(result.getHueUrl());
     }
 
     @Test
@@ -83,8 +85,8 @@ public class HiveControllerTest {
         CreateTableResponse result = sut.createTable(new Metadata());
 
         verify(hiveService).createTable(hiveTable);
-        Assert.assertNotNull(result.getArcadiaLocation());
-        Assert.assertNull(result.getHueLocation());
+        Assert.assertNotNull(result.getArcadiaUrl());
+        Assert.assertNull(result.getHueUrl());
     }
 
     @Test
@@ -94,8 +96,8 @@ public class HiveControllerTest {
         CreateTableResponse result = sut.createTable(new Metadata());
 
         verify(hiveService).createTable(hiveTable);
-        Assert.assertNull(result.getArcadiaLocation());
-        Assert.assertNotNull(result.getHueLocation());
+        Assert.assertNull(result.getArcadiaUrl());
+        Assert.assertNotNull(result.getHueUrl());
     }
 
     @Test
@@ -106,8 +108,24 @@ public class HiveControllerTest {
         CreateTableResponse result = sut.createTable(new Metadata());
 
         verify(hiveService).createTable(hiveTable);
-        Assert.assertNull(result.getArcadiaLocation());
-        Assert.assertNull(result.getHueLocation());
+        Assert.assertNull(result.getArcadiaUrl());
+        Assert.assertNull(result.getHueUrl());
     }
 
+    @Test
+    public void test_dropTable_scope_public() {
+        sut.dropTable(new Metadata(), Optional.of("public"));
+
+        verify(hiveService, times(1)).dropTable(any());
+    }
+
+    @Test
+    public void test_dropTable_scope_private() {
+        when(metadataMapper.apply(any(), any())).thenReturn(hiveTable);
+        Metadata metadata = new Metadata();
+        metadata.orgUUID = "cccccf34-f597-4634-8dd2-1875c06b9c4c";
+        sut.dropTable(metadata, Optional.<String>empty());
+
+        verify(hiveService, times(2)).dropTable(any());
+    }
 }

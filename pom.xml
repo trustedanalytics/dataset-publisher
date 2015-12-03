@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>dataset-publisher</artifactId>
-    <version>0.4.7</version>
+    <version>0.4.8</version>
 
     <parent>
         <groupId>org.trustedanalytics</groupId>
@@ -239,8 +239,8 @@
     <properties>
         <start-class>org.trustedanalytics.datasetpublisher.Application</start-class>
         <hive.version>0.13.1</hive.version>
-        <jacoco-measurement-instructions>0.250</jacoco-measurement-instructions>
-        <jacoco-measurement-branches>0.15</jacoco-measurement-branches>
+        <jacoco-measurement-instructions>0.245</jacoco-measurement-instructions>
+        <jacoco-measurement-branches>0.12</jacoco-measurement-branches>
         <jacoco-measurement-lines>0.800</jacoco-measurement-lines>
         <jacoco-measurement-classes>0.800</jacoco-measurement-classes>
     </properties>

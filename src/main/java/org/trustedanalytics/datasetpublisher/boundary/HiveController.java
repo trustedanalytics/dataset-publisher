@@ -25,38 +25,41 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.trustedanalytics.datasetpublisher.Config;
 import org.trustedanalytics.datasetpublisher.entity.HiveTable;
+import org.trustedanalytics.datasetpublisher.service.DatabaseNameResolver;
 import org.trustedanalytics.datasetpublisher.service.HiveService;
 
-import java.util.function.Function;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.BiFunction;
 
 @RestController
 public class HiveController {
 
     private final Config.Hue hue;
-
     private final Config.Arcadia arcadia;
-
     private final HiveService hiveService;
-
-    private final Function<Metadata, HiveTable> metadataMapper;
+    private final BiFunction<Metadata, String, HiveTable> metadataMapper;
+    private final DatabaseNameResolver databaseNameResolver;
 
     @Autowired
-    public HiveController(HiveService hiveService, Function<Metadata, HiveTable> metadataMapper,
-        Config.Hue hue, Config.Arcadia arcadia) {
+    public HiveController(HiveService hiveService, BiFunction<Metadata, String, HiveTable> metadataMapper,
+        Config.Hue hue, Config.Arcadia arcadia, DatabaseNameResolver databaseNameResolver) {
         this.hiveService = hiveService;
         this.metadataMapper = metadataMapper;
         this.hue = hue;
         this.arcadia = arcadia;
+        this.databaseNameResolver = databaseNameResolver;
     }
 
     @RequestMapping(value = "/rest/tables", method = POST)
     @ResponseStatus(value = CREATED)
     public CreateTableResponse createTable(@RequestBody Metadata metadata) {
-        final HiveTable table = metadataMapper.apply(metadata);
+        final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
         hiveService.createTable(table);
 
         final String hueUrl = hue.isAvailable()
@@ -68,8 +71,12 @@ public class HiveController {
 
     @RequestMapping(value = "/rest/tables", method = DELETE)
     @ResponseStatus(value = OK)
-    public void dropTable(@RequestBody Metadata metadata) {
-        hiveService.dropTable(metadataMapper.apply(metadata));
+    public void dropTable(@RequestBody Metadata metadata, @RequestParam Optional<String> scope) {
+
+        hiveService.dropTable(metadataMapper.apply(metadata, databaseNameResolver.resolvePublicName()));
+        if(!scope.filter("public"::equalsIgnoreCase).isPresent()) {
+            hiveService.dropTable(metadataMapper.apply(metadata, databaseNameResolver.resolvePrivateName(UUID.fromString(metadata.orgUUID))));
+        }
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -77,5 +84,4 @@ public class HiveController {
     public String errorHandler(IllegalArgumentException e) {
         return e.getMessage();
     }
-
 }

@@ -18,7 +18,13 @@ package org.trustedanalytics.datasetpublisher;
 import static org.springframework.context.annotation.ScopedProxyMode.INTERFACES;
 import static org.springframework.web.context.WebApplicationContext.SCOPE_REQUEST;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.google.common.collect.ImmutableSet;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
+import feign.slf4j.Slf4jLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -39,6 +45,7 @@ import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.trustedanalytics.datasetpublisher.boundary.ExternalTool;
+import org.trustedanalytics.datasetpublisher.service.DatabaseNameResolver;
 import org.trustedanalytics.datasetpublisher.service.KerberosDataSource;
 
 import java.io.IOException;
@@ -76,6 +83,11 @@ public class Config {
     }
 
     @Bean
+    public DatabaseNameResolver databaseNameResolver() {
+        return new DatabaseNameResolver(ccOperations());
+    }
+
+    @Bean
     public AuthTokenRetriever authTokenRetriever() {
         return new OAuth2TokenRetriever();
     }
@@ -85,9 +97,16 @@ public class Config {
     public CcOperations ccOperations() {
         final Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         final String token = authTokenRetriever().getAuthToken(auth);
+        final ObjectMapper objectMapper = new ObjectMapper()
+            .setPropertyNamingStrategy(new PropertyNamingStrategy.LowerCaseWithUnderscoresStrategy())
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
         return new FeignClient(apiBaseUrl, builder -> builder
-            .requestInterceptor(template -> template.header("Authorization", "bearer " + token)));
+            .requestInterceptor(template -> template.header("Authorization", "bearer " + token))
+            .encoder(new JacksonEncoder(objectMapper))
+            .decoder(new JacksonDecoder(objectMapper))
+            .logger(new Slf4jLogger(Config.class))
+            .logLevel(feign.Logger.Level.BASIC));
     }
 
     @Bean
