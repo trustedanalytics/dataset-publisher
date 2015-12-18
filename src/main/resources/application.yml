@@ -27,3 +27,6 @@ logging:
   level:
     org.springframework.security: DEBUG
     org.trustedanalytics: DEBUG
+
+endpoints.enabled: false
+endpoints.health.enabled: true
