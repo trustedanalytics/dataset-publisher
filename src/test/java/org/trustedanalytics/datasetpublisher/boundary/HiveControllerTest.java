@@ -123,7 +123,7 @@ public class HiveControllerTest {
     public void test_dropTable_scope_private() {
         when(metadataMapper.apply(any(), any())).thenReturn(hiveTable);
         Metadata metadata = new Metadata();
-        metadata.orgUUID = "cccccf34-f597-4634-8dd2-1875c06b9c4c";
+        metadata.setOrgUUID("cccccf34-f597-4634-8dd2-1875c06b9c4c");
         sut.dropTable(metadata, Optional.<String>empty());
 
         verify(hiveService, times(2)).dropTable(any());

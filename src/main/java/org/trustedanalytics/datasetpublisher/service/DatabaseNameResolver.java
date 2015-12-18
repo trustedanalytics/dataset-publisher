@@ -39,9 +39,9 @@ public class DatabaseNameResolver {
     }
 
     public String resolveName(Metadata metadata) {
-        if(metadata.isPublic) {
+        if(metadata.getIsPublic()) {
             return resolvePublicName();
         }
-        return resolvePrivateName(UUID.fromString(metadata.orgUUID));
+        return resolvePrivateName(UUID.fromString(metadata.getOrgUUID()));
     }
 }

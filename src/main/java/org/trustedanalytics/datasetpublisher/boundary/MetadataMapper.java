@@ -44,11 +44,11 @@ public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
     @Override
     public HiveTable apply(Metadata metadata, String databaseName) {
 
-        final String tableName = toValidName(metadata.title);
-        final List<String> fields = Arrays.stream(metadata.dataSample.split(","))
+        final String tableName = toValidName(metadata.getTitle());
+        final List<String> fields = Arrays.stream(metadata.getDataSample().split(","))
             .map(this::toValidName)
             .collect(Collectors.toList());
-        final String location = toValidLocation(metadata.targetUri);
+        final String location = toValidLocation(metadata.getTargetUri());
 
         return new HiveTable(toValidName(databaseName), tableName, fields, location);
     }

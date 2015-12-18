@@ -60,11 +60,11 @@ public class MetadataMapperTest {
     public void testMapValidMetadata() {
         // given
         final Metadata metadata = new Metadata();
-        metadata.orgUUID = orgUUID.toString();
-        metadata.title = "Qatar: GDP (constant LCU)";
-        metadata.dataSample = "Complaint ID,Product,Location,Date,Date received,Timely response?";
-        metadata.targetUri = "hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1";
-        metadata.isPublic = false;
+        metadata.setOrgUUID(orgUUID.toString());
+        metadata.setTitle("Qatar: GDP (constant LCU)");
+        metadata.setDataSample("Complaint ID,Product,Location,Date,Date received,Timely response?");
+        metadata.setTargetUri("hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1");
+        metadata.setIsPublic(false);
 
         // when
         final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
@@ -80,11 +80,11 @@ public class MetadataMapperTest {
     public void testMapInvalidMetadata() {
         // given
         final Metadata metadata = new Metadata();
-        metadata.orgUUID = orgUUID.toString();
-        metadata.title = "1900: CHINA ITS";
-        metadata.dataSample = ":One,*Two two,3Three,Four_";
-        metadata.targetUri = "hdfs://10.10.123.123/cf/broker/instances/12/34/000000_1";
-        metadata.isPublic = false;
+        metadata.setOrgUUID(orgUUID.toString());
+        metadata.setTitle("1900: CHINA ITS");
+        metadata.setDataSample(":One,*Two two,3Three,Four_");
+        metadata.setTargetUri("hdfs://10.10.123.123/cf/broker/instances/12/34/000000_1");
+        metadata.setIsPublic(false);
 
         // when
         final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
@@ -100,11 +100,11 @@ public class MetadataMapperTest {
     public void testMapPublicDataset() {
         // given
         final Metadata metadata = new Metadata();
-        metadata.orgUUID = orgUUID.toString();
-        metadata.title = "Qatar: GDP (constant LCU)";
-        metadata.dataSample = "Complaint ID,Product,Location,Date,Date received,Timely response?";
-        metadata.targetUri = "hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1";
-        metadata.isPublic = true;
+        metadata.setOrgUUID(orgUUID.toString());
+        metadata.setTitle("Qatar: GDP (constant LCU)");
+        metadata.setDataSample("Complaint ID,Product,Location,Date,Date received,Timely response?");
+        metadata.setTargetUri("hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1");
+        metadata.setIsPublic(true);
 
         // when
         final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
@@ -131,14 +131,11 @@ public class MetadataMapperTest {
             return "orgname";
         }
 
-
         @Bean
         public BiFunction<Metadata, String, HiveTable> metadataMapper() {
             Set<String> restrictedKeywords = ImmutableSet.of("location", "date");
             return new MetadataMapper(() -> restrictedKeywords);
         }
-
-
 
         @Bean
         public CcOperations ccOperations() {

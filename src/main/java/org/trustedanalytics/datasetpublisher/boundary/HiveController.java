@@ -75,7 +75,7 @@ public class HiveController {
 
         hiveService.dropTable(metadataMapper.apply(metadata, databaseNameResolver.resolvePublicName()));
         if(!scope.filter("public"::equalsIgnoreCase).isPresent()) {
-            hiveService.dropTable(metadataMapper.apply(metadata, databaseNameResolver.resolvePrivateName(UUID.fromString(metadata.orgUUID))));
+            hiveService.dropTable(metadataMapper.apply(metadata, databaseNameResolver.resolvePrivateName(UUID.fromString(metadata.getOrgUUID()))));
         }
     }
 

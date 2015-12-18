@@ -19,9 +19,9 @@ import lombok.Data;
 
 @Data
 public class Metadata {
-    public String orgUUID;
-    public String title;
-    public String dataSample;
-    public String targetUri;
-    public Boolean isPublic;
+    private String orgUUID;
+    private String title;
+    private String dataSample;
+    private String targetUri;
+    private Boolean isPublic;
 }
