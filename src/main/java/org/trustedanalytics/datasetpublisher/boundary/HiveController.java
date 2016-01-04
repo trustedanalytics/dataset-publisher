@@ -21,6 +21,11 @@ import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import org.trustedanalytics.datasetpublisher.Config;
+import org.trustedanalytics.datasetpublisher.entity.HiveTable;
+import org.trustedanalytics.datasetpublisher.service.DatabaseNameResolver;
+import org.trustedanalytics.datasetpublisher.service.HiveService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,10 +33,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.trustedanalytics.datasetpublisher.Config;
-import org.trustedanalytics.datasetpublisher.entity.HiveTable;
-import org.trustedanalytics.datasetpublisher.service.DatabaseNameResolver;
-import org.trustedanalytics.datasetpublisher.service.HiveService;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -79,9 +80,9 @@ public class HiveController {
         }
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     @ResponseStatus(value = BAD_REQUEST)
-    public String errorHandler(IllegalArgumentException e) {
+    public String badRequestExceptionHandler(RuntimeException e) {
         return e.getMessage();
     }
 }

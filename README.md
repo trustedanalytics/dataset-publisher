@@ -11,7 +11,12 @@ belongs to. In other words full name of the table is:
 
 #### Note
 Name of the database, table and columns can be transformed to fit database engine and driver
-naming scheme.
+naming scheme.  
+In particular, columns names are transformed as follows:
+- all letters are changed to lowercase
+- 'x' prefix is added if word does not start with a letter 
+- non alphanumeric characters are changed to '_'
+- underscore prefix is added if the word is reserved by Impala
 
 ## Development
 To start dataset-publisher run: 

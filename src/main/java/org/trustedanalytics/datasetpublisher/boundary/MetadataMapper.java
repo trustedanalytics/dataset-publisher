@@ -43,14 +43,19 @@ public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
 
     @Override
     public HiveTable apply(Metadata metadata, String databaseName) {
+        final List<String> fields = Arrays.asList(metadata.getDataSample().split(","));
+        // validate if initial names of header fields are distinct
+        checkDuplicates(fields, "Duplicated header fields");
 
         final String tableName = toValidName(metadata.getTitle());
-        final List<String> fields = Arrays.stream(metadata.getDataSample().split(","))
-            .map(this::toValidName)
-            .collect(Collectors.toList());
+        final List<String> columns = fields.stream()
+                .map(this::toValidName)
+                .collect(Collectors.toList());
         final String location = toValidLocation(metadata.getTargetUri());
 
-        return new HiveTable(toValidName(databaseName), tableName, fields, location);
+        // validate if names of fields transformed into name columns are distinct
+        checkDuplicates(columns, "Duplicated table columns");
+        return new HiveTable(toValidName(databaseName), tableName, columns, location);
     }
 
     /**
@@ -81,4 +86,17 @@ public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
         return restrictedKeywords.contains(string);
     }
 
+    private void checkDuplicates(List<String> strings, String exceptionMessagePrefix) {
+        strings.stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .filter(group -> group.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .sorted()
+                .reduce((acc, column) -> acc + ", " + column)
+                .ifPresent(duplicates -> {
+                    throw new IllegalStateException(exceptionMessagePrefix + ": " + duplicates);
+                });
+    }
 }

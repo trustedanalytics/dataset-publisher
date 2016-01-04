@@ -21,24 +21,29 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.ImmutableSet;
-import org.trustedanalytics.datasetpublisher.entity.HiveTable;
 import org.trustedanalytics.cloud.cc.api.CcOperations;
 import org.trustedanalytics.cloud.cc.api.CcOrg;
+import org.trustedanalytics.datasetpublisher.entity.HiveTable;
+import org.trustedanalytics.datasetpublisher.service.DatabaseNameResolver;
 
+import com.google.common.collect.ImmutableSet;
+
+import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.trustedanalytics.datasetpublisher.service.DatabaseNameResolver;
-import rx.Observable;
 
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiFunction;
+
+import rx.Observable;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {MetadataMapperTest.HiveControllerTestConfig.class})
@@ -55,6 +60,9 @@ public class MetadataMapperTest {
 
     @Autowired
     private DatabaseNameResolver databaseNameResolver;
+
+    @Rule
+    public final ExpectedException exception = ExpectedException.none();
 
     @Test
     public void testMapValidMetadata() {
@@ -111,6 +119,46 @@ public class MetadataMapperTest {
 
         // then
         assertThat(table.databaseName, is("public"));
+    }
+
+    @Test
+    public void testValidateDuplicatedFields(){
+        // given
+        final Metadata metadata = new Metadata();
+        metadata.setOrgUUID(orgUUID.toString());
+        metadata.setTitle("Qatar: GDP (constant LCU)");
+        metadata.setDataSample("A11,6,A34,A43,1169,A65,A75,4,A93,A101,4,A121,67,A143,A152,2,A173,1,A192,A201,1,A11,A192");
+        metadata.setTargetUri("hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1");
+        metadata.setIsPublic(true);
+
+        exception.expect(IllegalStateException.class);
+        exception.expectMessage("Duplicated header fields: 1, 4, A11, A192");
+
+        // when
+        final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
+
+        // then
+        Assert.assertNull(table);
+    }
+
+    @Test
+    public void testValidateDuplicatedColumns(){
+        // given
+        final Metadata metadata = new Metadata();
+        metadata.setOrgUUID(orgUUID.toString());
+        metadata.setTitle("Qatar: GDP (constant LCU)");
+        metadata.setDataSample("one,two, sth,#sth,_4,x$4,run ,run#");
+        metadata.setTargetUri("hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1");
+        metadata.setIsPublic(false);
+
+        exception.expect(IllegalStateException.class);
+        exception.expectMessage("Duplicated table columns: run_, x_4, x_sth");
+
+        // when
+        final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
+
+        // then
+        Assert.assertNull(table);
     }
 
     @Configuration
