@@ -1,6 +1,6 @@
-thrift-server:
-  url: ${vcap.services.thrift-server.credentials.hiveUrl:jdbc:hive2://localhost:10000}
-  user: ${vcap.services.thrift-server.credentials.hiveUser:hdfs}
+hive:
+  url: ${vcap.services.hive.credentials.hiveUrl:jdbc:hive2://localhost:10000}
+  user: ${vcap.services.hive.credentials.hiveUser:hdfs}
 
 hue:
   url: ${vcap.services.external-tools.credentials.hue.url}
