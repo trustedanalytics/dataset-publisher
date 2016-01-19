@@ -59,10 +59,10 @@ public class Config {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Config.class);
 
-    @Value("${hive.url}")
+    @Value("${thrift-server.url}")
     private String hiveUrl;
 
-    @Value("${hive.user}")
+    @Value("${thrift-server.user}")
     private String hiveUser;
 
     @Value("${cf.resource}")
