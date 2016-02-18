@@ -38,6 +38,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
+import io.swagger.annotations.ApiOperation;
+
 @RestController
 public class HiveController {
 
@@ -57,6 +59,7 @@ public class HiveController {
         this.databaseNameResolver = databaseNameResolver;
     }
 
+    @ApiOperation("Create Hive table")
     @RequestMapping(value = "/rest/tables", method = POST)
     @ResponseStatus(value = CREATED)
     public CreateTableResponse createTable(@RequestBody Metadata metadata) {
@@ -70,6 +73,7 @@ public class HiveController {
         return new CreateTableResponse(hueUrl, arcadiaUrl);
     }
 
+    @ApiOperation("Drop Hive table")
     @RequestMapping(value = "/rest/tables", method = DELETE)
     @ResponseStatus(value = OK)
     public void dropTable(@RequestBody Metadata metadata, @RequestParam Optional<String> scope) {

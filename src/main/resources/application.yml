@@ -15,7 +15,7 @@ cf:
   uaa: ${vcap.services.sso.credentials.uaaUri}
 
 security:
-  ignored: /open,/sdoc.jsp,/*.js,/api-docs,/api-docs/default/*,/images/*,/lib/*,/css/*
+  ignored: /open,/sdoc.jsp,/*.js,/api-docs,/api-docs/default/*,/images/*,/lib/*,/css/*,/v2/api-docs
 
 spring.oauth2:
   resource:
