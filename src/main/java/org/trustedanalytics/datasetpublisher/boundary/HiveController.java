@@ -59,7 +59,10 @@ public class HiveController {
         this.databaseNameResolver = databaseNameResolver;
     }
 
-    @ApiOperation("Create Hive table")
+    @ApiOperation(
+            value = "Create Hive table",
+            notes = "Privilege level: Consumer of this endpoint must be a member of specified organization"
+    )
     @RequestMapping(value = "/rest/tables", method = POST)
     @ResponseStatus(value = CREATED)
     public CreateTableResponse createTable(@RequestBody Metadata metadata) {
@@ -73,7 +76,10 @@ public class HiveController {
         return new CreateTableResponse(hueUrl, arcadiaUrl);
     }
 
-    @ApiOperation("Drop Hive table")
+    @ApiOperation(
+            value = "Drop Hive table",
+            notes = "Privilege level: Consumer of this endpoint must be a member of specified organization"
+    )
     @RequestMapping(value = "/rest/tables", method = DELETE)
     @ResponseStatus(value = OK)
     public void dropTable(@RequestBody Metadata metadata, @RequestParam Optional<String> scope) {
