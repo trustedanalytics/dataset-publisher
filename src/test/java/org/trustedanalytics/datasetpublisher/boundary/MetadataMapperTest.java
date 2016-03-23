@@ -16,6 +16,7 @@
 package org.trustedanalytics.datasetpublisher.boundary;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
@@ -28,6 +29,7 @@ import org.trustedanalytics.datasetpublisher.service.DatabaseNameResolver;
 
 import com.google.common.collect.ImmutableSet;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -127,12 +129,14 @@ public class MetadataMapperTest {
         final Metadata metadata = new Metadata();
         metadata.setOrgUUID(orgUUID.toString());
         metadata.setTitle("Qatar: GDP (constant LCU)");
-        metadata.setDataSample("A11,6,A34,A43,1169,A65,A75,4,A93,A101,4,A121,67,A143,A152,2,A173,1,A192,A201,1,A11,A192");
-        metadata.setTargetUri("hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1");
+        metadata.setDataSample(
+            "A11,6,A34,A43,1169,A65,A75,4,A93,A101,4,A121,67,A143,A152,2,A173,1,A192,A201,1,A11,A192");
+        metadata.setTargetUri(
+            "hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1");
         metadata.setIsPublic(true);
 
         exception.expect(IllegalStateException.class);
-        exception.expectMessage("Duplicated header fields: 1, 4, A11, A192");
+        exception.expectMessage("Duplicated header fields in file: 1, 4, A11, A192");
 
         // when
         final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
@@ -152,13 +156,32 @@ public class MetadataMapperTest {
         metadata.setIsPublic(false);
 
         exception.expect(IllegalStateException.class);
-        exception.expectMessage("Duplicated table columns: run_, x_4, x_sth");
+        exception.expectMessage("Duplicated columns in table: run_, x_4, x_sth");
 
         // when
         final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
 
         // then
         Assert.assertNull(table);
+    }
+
+    @Test
+    public void testLongIdentifier() {
+        // given
+        final Metadata metadata = new Metadata();
+        metadata.setOrgUUID(orgUUID.toString());
+        metadata.setTitle(StringUtils.repeat("c", MetadataMapper.IDENTIFIER_MAX_LEN * 2));
+        metadata.setDataSample("one,two," + StringUtils.repeat("a", MetadataMapper.IDENTIFIER_MAX_LEN
+            * 2));
+        metadata.setTargetUri("hdfs://10.10.123.123/cf/broker/instances/9614e6a4/3460a1d320b2/000000_1");
+        metadata.setIsPublic(false);
+
+        // when
+        final HiveTable table = metadataMapper.apply(metadata, databaseNameResolver.resolveName(metadata));
+
+        // then
+        assertThat(table.tableName, is(StringUtils.repeat("c", MetadataMapper.IDENTIFIER_MAX_LEN)));
+        assertThat(table.fields, containsInAnyOrder("one", "two", StringUtils.repeat("a", MetadataMapper.IDENTIFIER_MAX_LEN)));
     }
 
     @Configuration

@@ -17,6 +17,7 @@ package org.trustedanalytics.datasetpublisher.boundary;
 
 import org.trustedanalytics.datasetpublisher.entity.HiveTable;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 @Component
 public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
 
+    public static final int IDENTIFIER_MAX_LEN = 64;
     private final Set<String> restrictedKeywords;
 
     @Autowired
@@ -45,7 +47,7 @@ public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
     public HiveTable apply(Metadata metadata, String databaseName) {
         final List<String> fields = Arrays.asList(metadata.getDataSample().split(","));
         // validate if initial names of header fields are distinct
-        checkDuplicates(fields, "Duplicated header fields");
+        checkDuplicates(fields, "Duplicated header fields in file");
 
         final String tableName = toValidName(metadata.getTitle());
         final List<String> columns = fields.stream()
@@ -54,7 +56,7 @@ public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
         final String location = toValidLocation(metadata.getTargetUri());
 
         // validate if names of fields transformed into name columns are distinct
-        checkDuplicates(columns, "Duplicated table columns");
+        checkDuplicates(columns, "Duplicated columns in table");
         return new HiveTable(toValidName(databaseName), tableName, columns, location);
     }
 
@@ -72,7 +74,9 @@ public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
             // replace non alphanumeric characters
             .andThen(s -> s.replaceAll("\\W", "_"))
             // add underscore after name that is Impala reserved word
-            .andThen(s -> toValidKeyword(s) ? s + "_" : s)
+            .andThen(s -> isValidKeyword(s) ? s : s + "_")
+            // limit identifier length
+            .andThen(s -> StringUtils.left(s, IDENTIFIER_MAX_LEN))
             // apply initial name
             .apply(string);
     }
@@ -82,8 +86,8 @@ public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
         return path.substring(0, path.lastIndexOf("/"));
     }
 
-    private boolean toValidKeyword(String string) {
-        return restrictedKeywords.contains(string);
+    private boolean isValidKeyword(String string) {
+        return !restrictedKeywords.contains(string);
     }
 
     private void checkDuplicates(List<String> strings, String exceptionMessagePrefix) {
