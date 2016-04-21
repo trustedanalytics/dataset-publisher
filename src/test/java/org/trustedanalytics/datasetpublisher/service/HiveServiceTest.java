@@ -15,77 +15,115 @@
  */
 package org.trustedanalytics.datasetpublisher.service;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import org.trustedanalytics.datasetpublisher.entity.HiveTable;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.trustedanalytics.datasetpublisher.entity.HiveTable;
+import org.trustedanalytics.hadoop.config.client.helper.Hive;
+import org.trustedanalytics.hadoop.config.client.oauth.JwtToken;
 
-import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.Collections;
 
+import javax.security.auth.login.LoginException;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {HiveServiceTest.HiveServiceTestConfiguration.class})
+@ContextConfiguration(classes = {HiveServiceTest.HiveServiceTestConfiguration.class,
+                                 HiveService.class})
 public class HiveServiceTest {
 
-    @Autowired
-    private QueryBuilder queryBuilder;
+  @Autowired
+  private QueryBuilder queryBuilder;
 
-    @Autowired
-    private JdbcOperations jdbcOperations;
+  @Autowired
+  private JwtToken userIdentity;
 
-    @Test
-    public void testCreateTable() {
-        // given
-        final HiveService hiveService = new HiveService(jdbcOperations, queryBuilder);
-        final HiveTable hiveTable = new HiveTable("db", "table", Collections.emptyList(), "loc");
+  @Autowired
+  private Hive hiveClient;
 
-        // when
-        hiveService.createTable(hiveTable);
+  @Autowired
+  private HiveService hiveService;
 
-        // then
-        verify(queryBuilder).createDatabase(hiveTable);
-        verify(queryBuilder).createTable(hiveTable);
+  @Test
+  public void testCreateTable() throws Exception {
+    // given
+    final HiveTable hiveTable = new HiveTable("db", "table", Collections.emptyList(), "loc");
+    Connection connection = mock(Connection.class);
+    Statement stm = mock(Statement.class);
+
+    // when
+    when(connection.createStatement()).thenReturn(stm);
+    when(hiveClient.getConnection(userIdentity)).thenReturn(connection);
+    hiveService.createTable(hiveTable, userIdentity);
+
+    // then
+    verify(queryBuilder).createTable(hiveTable);
+  }
+
+  @Test
+  public void testDropTable() throws Exception {
+    //given
+    final HiveTable hiveTable = new HiveTable("db", "table", Collections.emptyList(), "loc");
+    Connection connection = mock(Connection.class);
+    Statement stm = mock(Statement.class);
+
+    //when
+    when(connection.createStatement()).thenReturn(stm);
+    when(hiveClient.getConnection(userIdentity)).thenReturn(connection);
+    hiveService.dropTable(hiveTable, userIdentity);
+
+    //then
+    verify(queryBuilder).dropTable(hiveTable);
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testCreateTable_executionQueryException_propagatesAsRuntime() throws Exception {
+    //given
+    final HiveTable hiveTable = new HiveTable("db", "table", Collections.emptyList(), "loc");
+    Connection connection = mock(Connection.class);
+    Statement stm = mock(Statement.class);
+    when(connection.createStatement()).thenReturn(stm);
+    when(hiveClient.getConnection(userIdentity)).thenReturn(connection);
+    when(stm.executeUpdate(anyObject())).thenThrow(LoginException.class);
+
+    //when
+    hiveService.createTable(hiveTable, userIdentity);
+
+    //then
+    //any Exception in executing query propagates as RuntimeException
+  }
+
+  @Configuration
+  static class HiveServiceTestConfiguration {
+
+    @Bean
+    public QueryBuilder queryBuilder() {
+      QueryBuilder builder = mock(QueryBuilder.class);
+      when(builder.createDatabase(any())).thenReturn("sql");
+      when(builder.createTable(any())).thenReturn("sql");
+      when(builder.dropTable(any())).thenReturn("sql");
+      return builder;
     }
 
-    @Test
-    public void testDropTable() {
-        // given
-        final HiveService hiveService = new HiveService(jdbcOperations, queryBuilder);
-        final HiveTable hiveTable = new HiveTable("db", "table", Collections.emptyList(), "loc");
-
-        // when
-        hiveService.dropTable(hiveTable);
-
-        // then
-        verify(queryBuilder).dropTable(hiveTable);
+    @Bean
+    public JwtToken userIdentity() {
+      return mock(JwtToken.class);
     }
 
-    @Configuration
-    static class HiveServiceTestConfiguration {
-        @Bean
-        public QueryBuilder queryBuilder() throws SQLException {
-            QueryBuilder builder = mock(QueryBuilder.class);
-            when(builder.createDatabase(any())).thenReturn("sql");
-            when(builder.createTable(any())).thenReturn("sql");
-            when(builder.dropTable(any())).thenReturn("sql");
-            return builder;
-        }
-
-        @Bean
-        public JdbcOperations jdbcOperations() {
-            return mock(JdbcOperations.class);
-        }
+    @Bean
+    public Hive hiveClient(JwtToken token) {
+      return mock(Hive.class);
     }
-
+  }
 }

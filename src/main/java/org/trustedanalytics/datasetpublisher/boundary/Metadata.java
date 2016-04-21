@@ -15,9 +15,11 @@
  */
 package org.trustedanalytics.datasetpublisher.boundary;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class Metadata {
     private String orgUUID;
     private String title;

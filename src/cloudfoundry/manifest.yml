@@ -5,10 +5,10 @@ applications:
   instances: 1
   host: hive
   services:
-    - thrift-server
+    - hive-for-dspublisher
     - external-tools
     - sso
-    - kerberos-service
+    - kerberos-instance
   path: target/dataset-publisher-${version}.jar
   env:
     VERSION: ${version}

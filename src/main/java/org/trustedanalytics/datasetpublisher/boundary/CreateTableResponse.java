@@ -17,20 +17,23 @@ package org.trustedanalytics.datasetpublisher.boundary;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Class encapsulates links to data analysis tools.
  */
-@Data
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Setter
+@Getter
 public class CreateTableResponse {
 
-    @JsonProperty("hue_url")
-    private final String hueUrl;
+  @JsonProperty("hue_url")
+  private final String hueUrl;
 
-    @JsonProperty("arcadia_url")
-    private final String arcadiaUrl;
+  @JsonProperty("arcadia_url")
+  private final String arcadiaUrl;
 }

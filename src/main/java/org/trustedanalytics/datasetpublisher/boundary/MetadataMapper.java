@@ -15,15 +15,16 @@
  */
 package org.trustedanalytics.datasetpublisher.boundary;
 
-import org.trustedanalytics.datasetpublisher.entity.HiveTable;
-
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.trustedanalytics.datasetpublisher.entity.HiveTable;
 
 import java.net.URI;
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
  * database, table and columns may change to fit database engine constraints.
  */
 @Component
-public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
+public class MetadataMapper implements Function<Metadata, HiveTable> {
 
     public static final int IDENTIFIER_MAX_LEN = 64;
     private final Set<String> restrictedKeywords;
@@ -44,28 +45,29 @@ public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
     }
 
     @Override
-    public HiveTable apply(Metadata metadata, String databaseName) {
+    public HiveTable apply(Metadata metadata) {
         final List<String> fields = Arrays.asList(metadata.getDataSample().split(","));
         // validate if initial names of header fields are distinct
         checkDuplicates(fields, "Duplicated header fields in file");
 
-        final String tableName = toValidName(metadata.getTitle());
+        final String tableName = toValidTableName(metadata.getTitle());
+        final String dbName = toValidDBName(metadata.getOrgUUID());
         final List<String> columns = fields.stream()
-                .map(this::toValidName)
+                .map(this::toValidTableName)
                 .collect(Collectors.toList());
         final String location = toValidLocation(metadata.getTargetUri());
 
         // validate if names of fields transformed into name columns are distinct
         checkDuplicates(columns, "Duplicated columns in table");
-        return new HiveTable(toValidName(databaseName), tableName, columns, location);
+        return new HiveTable(dbName, tableName, columns, location);
     }
 
     /**
-     * Converts name to valid string according to database engine and driver constraints.
-     * @param string name
+     * Converts table name to valid string according to database engine and driver constraints.
+     * @param string table name
      * @return valid name
      */
-    private String toValidName(String string) {
+    private String toValidTableName(String string) {
         final Function<String, String> lowercase = String::toLowerCase;
 
         return lowercase
@@ -79,6 +81,10 @@ public class MetadataMapper implements BiFunction<Metadata, String, HiveTable> {
             .andThen(s -> StringUtils.left(s, IDENTIFIER_MAX_LEN))
             // apply initial name
             .apply(string);
+    }
+
+    private String toValidDBName(String string) {
+      return string.replace('-', '_');
     }
 
     private String toValidLocation(String location) {

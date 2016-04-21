@@ -15,11 +15,13 @@
  */
 package org.trustedanalytics.datasetpublisher.boundary;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class ExternalTool {
 
-    private String url;
-    private boolean available;
+  private String url;
+  private boolean available;
 }
