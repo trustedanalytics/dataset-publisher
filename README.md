@@ -1,3 +1,5 @@
+[![Dependency Status](https://www.versioneye.com/user/projects/57236584ba37ce00350af547/badge.svg?style=flat)](https://www.versioneye.com/user/projects/57236584ba37ce00350af547)
+
 dataset-publisher
 =================
 
