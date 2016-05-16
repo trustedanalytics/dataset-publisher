@@ -15,11 +15,16 @@
  */
 package org.trustedanalytics.datasetpublisher.boundary;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.trustedanalytics.datasetpublisher.Config;
@@ -27,16 +32,9 @@ import org.trustedanalytics.datasetpublisher.entity.HiveTable;
 import org.trustedanalytics.datasetpublisher.service.HiveService;
 import org.trustedanalytics.hadoop.config.client.oauth.JwtToken;
 
-import java.util.Optional;
 import java.util.function.Function;
 
 import io.swagger.annotations.ApiOperation;
-
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.OK;
-import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
 public class HiveController {
@@ -79,7 +77,7 @@ public class HiveController {
   )
   @RequestMapping(value = "/rest/tables", method = DELETE)
   @ResponseStatus(value = OK)
-  public void dropTable(@RequestBody Metadata metadata, @RequestParam Optional<String> scope) {
+  public void dropTable(@RequestBody Metadata metadata) {
     hiveService.dropTable(metadataMapper.apply(metadata), userIdentity);
   }
 
@@ -100,6 +98,9 @@ public class HiveController {
     private HiveService hiveService;
 
     private JwtToken userIdentity;
+
+    private Builder() {
+    }
 
     public static Builder create() {
       return new Builder();
@@ -138,9 +139,6 @@ public class HiveController {
       controller.userIdentity = this.userIdentity;
       controller.metadataMapper = this.metadataMapper;
       return controller;
-    }
-
-    private Builder() {
     }
   }
 }

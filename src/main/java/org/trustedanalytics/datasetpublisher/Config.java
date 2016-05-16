@@ -17,9 +17,6 @@ package org.trustedanalytics.datasetpublisher;
 
 import com.google.common.collect.ImmutableSet;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -44,11 +41,6 @@ import static org.springframework.web.context.WebApplicationContext.SCOPE_REQUES
 @Configuration
 @EnableConfigurationProperties({Config.Hue.class, Config.Arcadia.class})
 public class Config {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(Config.class);
-
-  @Value("${cf.resource}")
-  private String apiBaseUrl;
 
   @Bean
   public Hive hiveClient() throws IOException {

@@ -15,6 +15,11 @@
  */
 package org.trustedanalytics.datasetpublisher.boundary;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,13 +31,7 @@ import org.trustedanalytics.datasetpublisher.entity.HiveTable;
 import org.trustedanalytics.datasetpublisher.service.HiveService;
 import org.trustedanalytics.hadoop.config.client.oauth.JwtToken;
 
-import java.util.Optional;
 import java.util.function.Function;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HiveControllerTest {
@@ -120,7 +119,7 @@ public class HiveControllerTest {
         when(metadataMapper.apply(any())).thenReturn(hiveTable);
         Metadata metadata = new Metadata();
         metadata.setOrgUUID("cccccf34-f597-4634-8dd2-1875c06b9c4c");
-        sut.dropTable(metadata, Optional.<String>empty());
+        sut.dropTable(metadata);
 
         verify(hiveService, times(1)).dropTable(any(), any());
     }
